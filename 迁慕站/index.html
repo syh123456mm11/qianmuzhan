@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迁慕站 - 文件共享平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="public-page">
+    <header class="public-header">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <div id="logoContainer" style="cursor: pointer; display: inline-block;" title="迁慕站">
+                <img src="迁慕Q和M结合logo设计 (1).png" style="width: 48px; height: 48px; margin-bottom: 16px; vertical-align: middle;">
+            </div>
+            <h1>迁慕站</h1>
+            <p style="color: #6b7280; margin-top: 8px;">安全文件共享平台 - 所有文件可供浏览下载</p>
+        </div>
+    </header>
+
+    <main class="public-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+                <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin-bottom: 4px;">公共文件</h2>
+                <p style="color: #6b7280;">所有上传的文件实时更新，欢迎下载使用</p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="text" id="searchInput" placeholder="搜索文件..." 
+                       style="padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 6px; width: 250px; font-size: 14px;">
+                <select id="sortSelect" style="padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                    <option value="name">按名称排序</option>
+                    <option value="date">按时间排序</option>
+                    <option value="size">按大小排序</option>
+                    <option value="downloads">按下载量排序</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="filesContainer">
+            <div class="file-grid" id="fileGrid">
+                <!-- 动态加载文件卡片 -->
+            </div>
+            
+            <div id="loadingState" style="text-align: center; padding: 60px;">
+                <div class="loading"></div>
+                <p style="margin-top: 16px; color: #6b7280;">加载中...</p>
+            </div>
+            
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <h3 style="margin-bottom: 8px; color: #374151;">暂无文件</h3>
+                <p style="color: #6b7280;">文件库为空，请稍后再试</p>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background: white; border-top: 1px solid #e5e7eb; padding: 24px; text-align: center; margin-top: 60px;">
+        <p style="color: #6b7280; font-size: 14px;">© 2024 迁慕站 - 安全文件共享平台</p>
+    </footer>
+
+    <!-- 密码输入模态框（隐藏的管理入口） -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-content password-modal">
+            <div class="modal-header">
+                <h2>身份验证</h2>
+                <button class="close-btn" id="closePasswordModal" aria-label="关闭">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">请输入访问密码以进入管理系统</p>
+                <div class="input-group">
+                    <input type="password" id="passwordInput" placeholder="输入密码..." autocomplete="off">
+                    <button class="toggle-password" id="togglePassword" type="button">
+                        <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelPassword">取消</button>
+                <button class="btn btn-primary" id="confirmPassword">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理后台界面（默认隐藏） -->
+    <div id="adminInterface" style="display: none;">
+        <header class="header">
+            <div class="logo-small">
+                <img src="logo.png" alt="迁慕站Logo" class="logo-image-small">
+                <h1>迁慕站</h1>
+            </div>
+            <div class="user-info">
+                <span>管理员</span>
+                <button class="logout-btn" id="logoutBtn">退出登录</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <nav class="sidebar">
+                <button class="nav-item active" data-page="dashboard">📊 仪表盘</button>
+                <button class="nav-item" data-page="upload">📁 文件上传</button>
+                <button class="nav-item" data-page="files">📂 文件管理</button>
+                <button class="nav-item" data-page="settings">⚙️ 系统设置</button>
+                <button class="nav-item" data-page="public">🌐 返回前台</button>
+            </nav>
+
+            <main class="content-area" id="contentArea">
+                <!-- 仪表盘页面 -->
+                <div id="dashboardPage" class="page-content">
+                    <h1 class="page-title">管理仪表盘</h1>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 32px; margin-bottom: 8px;">📁</div>
+                            <div style="font-size: 24px; font-weight: 600; color: var(--gray-800);" id="totalFiles">0</div>
+                            <div style="color: var(--gray-600);">总文件数</div>
+                        </div>
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 32px; margin-bottom: 8px;">💾</div>
+                            <div style="font-size: 24px; font-weight: 600; color: var(--gray-800);" id="totalSize">0 MB</div>
+                            <div style="color: var(--gray-600);">总大小</div>
+                        </div>
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 32px; margin-bottom: 8px;">📥</div>
+                            <div style="font-size: 24px; font-weight: 600; color: var(--gray-800);" id="todayUploads">0</div>
+                            <div style="color: var(--gray-600);">今日上传</div>
+                        </div>
+                        <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                            <div style="font-size: 32px; margin-bottom: 8px;">👥</div>
+                            <div style="font-size: 24px; font-weight: 600; color: var(--gray-800);">1</div>
+                            <div style="color: var(--gray-600);">在线管理员</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <h3 style="margin-bottom: 16px; color: var(--gray-800);">最近上传的文件</h3>
+                        <div id="recentFilesList" style="max-height: 400px; overflow-y: auto;">
+                            <!-- 动态加载 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件上传页面 -->
+                <div id="uploadPage" class="page-content" style="display: none;">
+                    <h1 class="page-title">文件上传</h1>
+                    <div class="upload-section">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">拖拽文件到此处或点击上传</div>
+                            <div class="upload-hint">支持 ZIP, RAR, EXE, ARJ, PY 等多种格式</div>
+                            <input type="file" id="fileInput" class="file-input" multiple>
+                            <button class="upload-btn" id="selectFiles">选择文件</button>
+                        </div>
+                        
+                        <div id="uploadProgress" style="margin-top: 24px; display: none;">
+                            <div style="background: #e5e7eb; border-radius: 6px; overflow: hidden;">
+                                <div id="progressBarFill" style="height: 8px; background: #6366f1; width: 0%; transition: width 0.3s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; color: #6b7280;">
+                                <span id="progressText">准备上传...</span>
+                                <span id="progressPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件管理页面 -->
+                <div id="filesPage" class="page-content" style="display: none;">
+                    <h1 class="page-title">文件管理</h1>
+                    <div class="files-section">
+                        <div class="section-header">
+                            <h2 class="section-title">所有文件</h2>
+                            <div class="file-count" id="fileCount">共 0 个文件</div>
+                        </div>
+                        <div id="filesTableContainer">
+                            <table class="files-table" id="filesTable">
+                                <thead>
+                                    <tr>
+                                        <th>文件名</th>
+                                        <th>大小</th>
+                                        <th>上传时间</th>
+                                        <th>下载次数</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filesTableBody">
+                                    <!-- 动态加载文件列表 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="emptyState" class="empty-state" style="display: none;">
+                            <div class="empty-icon">📭</div>
+                            <p>暂无文件，请先上传文件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置页面 -->
+                <div id="settingsPage" class="page-content" style="display: none;">
+                    <h1 class="page-title">系统设置</h1>
+                    <div style="background: white; padding: 24px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <div style="max-width: 600px;">
+                            <h3 style="margin-bottom: 16px;">安全设置</h3>
+                            <div style="margin-bottom: 24px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">管理员密码</label>
+                                <div style="display: flex; gap: 12px;">
+                                    <input type="password" id="newPassword" placeholder="输入新密码" 
+                                           style="flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+                                    <button id="changePasswordBtn" class="btn btn-primary" style="width: auto;">修改密码</button>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 24px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="autoLogout" checked>
+                                    <span>2小时后自动登出</span>
+                                </label>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #e5e7eb; padding-top: 24px;">
+                                <h3 style="margin-bottom: 16px;">存储信息</h3>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                                    <div>
+                                        <div style="font-size: 14px; color: #6b7280;">存储路径</div>
+                                        <div style="font-family: monospace; font-size: 14px;">/uploads</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 14px; color: #6b7280;">文件保留时间</div>
+                                        <div style="font-size: 14px;">永久保留</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 24px;">
+                                <button id="clearAllDataBtn" class="btn btn-secondary" 
+                                        style="background: #ef4444; color: white;">清除所有数据</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 确认删除模态框 -->
+        <div class="modal-overlay" id="deleteModal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h2>确认删除</h2>
+                    <button class="close-btn" id="closeDeleteModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除文件 <strong id="deleteFileName"></strong> 吗？</p>
+                    <p style="color: #ef4444; font-size: 14px; margin-top: 8px;">此操作无法撤销</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelDelete">取消</button>
+                    <button class="btn btn-primary" id="confirmDelete" style="background: #ef4444;">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // 融合后的主脚本
+        class IntegratedSite {
+            constructor() {
+                this.clickCount = 0;
+                this.TARGET_CLICKS = 10;
+                this.CORRECT_PASSWORD = 'syh123456mm';
+                this.passwordAttempts = 0;
+                this.MAX_PASSWORD_ATTEMPTS = 3;
+                this.currentView = 'public';
+                this.fileManager = null;
+                
+                this.init();
+            }
+            
+            init() {
+                // 清除旧的认证状态（确保每次打开都是访客模式）
+                this.setAuthenticated(false);
+                
+                this.setupEventListeners();
+                this.showPublicView();
+                this.initializeFileManager();
+            }
+            
+            setupEventListeners() {
+                // Logo点击事件（隐蔽的管理入口）
+                const logoContainer = document.getElementById('logoContainer');
+                logoContainer.addEventListener('click', (e) => {
+                    this.handleLogoClick(e);
+                });
+                
+                // 密码模态框事件
+                this.setupPasswordModal();
+            }
+            
+            handleLogoClick(e) {
+                this.clickCount++;
+                
+                // 创建微妙的点击反馈（不明显）
+                this.createSubtleClickEffect(e);
+                
+                if (this.clickCount >= this.TARGET_CLICKS) {
+                    setTimeout(() => {
+                        this.showPasswordModal();
+                        this.clickCount = 0;
+                    }, 200);
+                }
+            }
+            
+            createSubtleClickEffect(e) {
+                // 极细微的视觉反馈，不明显
+                const logo = e.currentTarget.querySelector('img');
+                logo.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    logo.style.transform = 'scale(1)';
+                }, 100);
+            }
+            
+            setupPasswordModal() {
+                const modal = document.getElementById('passwordModal');
+                const confirmBtn = document.getElementById('confirmPassword');
+                const cancelBtn = document.getElementById('cancelPassword');
+                const closeBtn = document.getElementById('closePasswordModal');
+                const togglePassword = document.getElementById('togglePassword');
+                const passwordInput = document.getElementById('passwordInput');
+                
+                confirmBtn.addEventListener('click', () => this.verifyPassword());
+                cancelBtn.addEventListener('click', () => this.hidePasswordModal());
+                closeBtn.addEventListener('click', () => this.hidePasswordModal());
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) this.hidePasswordModal();
+                });
+                
+                togglePassword.addEventListener('click', () => {
+                    const type = passwordInput.type === 'password' ? 'text' : 'password';
+                    passwordInput.type = type;
+                });
+                
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.verifyPassword();
+                });
+            }
+            
+            showPasswordModal() {
+                const modal = document.getElementById('passwordModal');
+                const input = document.getElementById('passwordInput');
+                
+                modal.classList.add('active');
+                input.value = '';
+                input.focus();
+                this.passwordAttempts = 0;
+            }
+            
+            hidePasswordModal() {
+                const modal = document.getElementById('passwordModal');
+                modal.classList.remove('active');
+                document.getElementById('errorMessage').textContent = '';
+            }
+            
+            verifyPassword() {
+                const password = document.getElementById('passwordInput').value.trim();
+                const errorEl = document.getElementById('errorMessage');
+                
+                if (!password) {
+                    errorEl.textContent = '请输入密码';
+                    return;
+                }
+                
+                if (password === this.CORRECT_PASSWORD) {
+                    this.setAuthenticated(true);
+                    this.hidePasswordModal();
+                    this.showAdminView();
+                    this.showToast('身份验证成功', 'success');
+                } else {
+                    this.passwordAttempts++;
+                    const remaining = this.MAX_PASSWORD_ATTEMPTS - this.passwordAttempts;
+                    
+                    if (remaining > 0) {
+                        errorEl.textContent = `密码错误！还剩 ${remaining} 次机会`;
+                        document.getElementById('passwordInput').value = '';
+                    } else {
+                        this.hidePasswordModal();
+                        this.showSecurityAlert();
+                    }
+                }
+            }
+            
+            showSecurityAlert() {
+                const alert = document.createElement('div');
+                alert.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #ef4444;
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                    z-index: 9999;
+                    font-weight: 500;
+                `;
+                alert.textContent = '检测到异常访问行为';
+                document.body.appendChild(alert);
+                
+                setTimeout(() => alert.remove(), 3000);
+            }
+            
+            showPublicView() {
+                this.currentView = 'public';
+                document.body.className = 'public-page';
+                
+                // 显示公共界面元素
+                document.querySelector('.public-header').style.display = 'block';
+                document.querySelector('.public-content').style.display = 'block';
+                
+                // 隐藏管理界面
+                const adminInterface = document.getElementById('adminInterface');
+                if (adminInterface) adminInterface.style.display = 'none';
+            }
+            
+            showAdminView() {
+                this.currentView = 'admin';
+                document.body.className = 'admin-page';
+                
+                // 隐藏公共界面
+                document.querySelector('.public-header').style.display = 'none';
+                document.querySelector('.public-content').style.display = 'none';
+                
+                // 显示管理界面
+                const adminInterface = document.getElementById('adminInterface');
+                if (!adminInterface) {
+                    this.createAdminInterface();
+                } else {
+                    adminInterface.style.display = 'block';
+                }
+                
+                // 初始化文件管理器
+                if (this.fileManager) {
+                    this.fileManager.switchPage('dashboard');
+                }
+            }
+            
+            createAdminInterface() {
+                // 创建管理界面HTML（从原admin.html提取）
+                const adminHtml = `
+                    <div id="adminInterface">
+                        <!-- 管理界面内容 -->
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', adminHtml);
+                
+                // 重新初始化文件管理器
+                this.initializeFileManager();
+            }
+            
+            initializeFileManager() {
+                // 完整的文件管理器
+                this.fileManager = new PublicFileManager();
+                
+                // 设置导航切换事件
+                this.setupNavigationEvents();
+                
+                // 设置退出登录
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => {
+                        this.logout();
+                    });
+                }
+            }
+            
+            setupNavigationEvents() {
+                // 导航菜单切换
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = item.dataset.page;
+                        
+                        if (page === 'public') {
+                            // 返回前台
+                            this.logout();
+                            return;
+                        }
+                        
+                        this.switchPage(page);
+                        
+                        // 更新活动状态
+                        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+                });
+                
+                // 文件上传相关事件
+                this.setupFileUploadEvents();
+                
+                // 系统设置事件
+                this.setupSettingsEvents();
+            }
+            
+            setupFileUploadEvents() {
+                const fileInput = document.getElementById('fileInput');
+                const selectFiles = document.getElementById('selectFiles');
+                const uploadArea = document.getElementById('uploadArea');
+                
+                if (selectFiles) {
+                    selectFiles.addEventListener('click', () => fileInput.click());
+                }
+                
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        this.handleFileUpload(e.target.files);
+                    });
+                }
+                
+                // 拖拽上传
+                if (uploadArea) {
+                    uploadArea.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.add('dragover');
+                    });
+                    
+                    uploadArea.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.remove('dragover');
+                    });
+                    
+                    uploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.remove('dragover');
+                        this.handleFileUpload(e.dataTransfer.files);
+                    });
+                }
+            }
+            
+            setupSettingsEvents() {
+                // 修改密码
+                const changePasswordBtn = document.getElementById('changePasswordBtn');
+                if (changePasswordBtn) {
+                    changePasswordBtn.addEventListener('click', () => {
+                        this.changePassword();
+                    });
+                }
+                
+                // 清除数据
+                const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+                if (clearAllDataBtn) {
+                    clearAllDataBtn.addEventListener('click', () => {
+                        this.clearAllData();
+                    });
+                }
+            }
+            
+            switchPage(page) {
+                // 隐藏所有页面
+                document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+                
+                // 显示指定页面
+                const pageMap = {
+                    'dashboard': 'dashboardPage',
+                    'upload': 'uploadPage',
+                    'files': 'filesPage',
+                    'settings': 'settingsPage'
+                };
+                
+                const pageEl = document.getElementById(pageMap[page]);
+                if (pageEl) {
+                    pageEl.style.display = 'block';
+                    
+                    // 根据页面加载相应数据
+                    switch(page) {
+                        case 'dashboard':
+                            if (this.fileManager) this.fileManager.renderDashboard();
+                            break;
+                        case 'files':
+                            if (this.fileManager) this.fileManager.renderFilesTable();
+                            break;
+                    }
+                }
+            }
+            
+            handleFileUpload(files) {
+                if (!files || files.length === 0) return;
+                
+                const validFiles = Array.from(files).filter(file => this.validateFile(file));
+                
+                if (validFiles.length === 0) {
+                    this.showToast('没有有效的文件被选择', 'warning');
+                    return;
+                }
+                
+                this.uploadFiles(validFiles);
+            }
+            
+            validateFile(file) {
+                const allowedTypes = [
+                    'application/zip', 'application/x-rar-compressed', 'application/x-zip-compressed',
+                    'application/x-executable', 'application/x-msdownload', 'text/x-python',
+                    'application/x-arj', 'application/octet-stream'
+                ];
+                
+                const allowedExtensions = ['.zip', '.rar', '.exe', '.arj', '.py', '.txt', '.pdf', 
+                                           '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png', '.gif'];
+                
+                const fileName = file.name.toLowerCase();
+                const fileExtension = '.' + fileName.split('.').pop();
+                
+                const isValidType = allowedTypes.includes(file.type) || 
+                                   allowedExtensions.some(ext => fileName.endsWith(ext));
+                
+                const maxSize = 100 * 1024 * 1024;
+                const isValidSize = file.size <= maxSize;
+                
+                if (!isValidSize) {
+                    this.showToast(`文件 ${file.name} 超过100MB限制`, 'warning');
+                    return false;
+                }
+                
+                if (!isValidType) {
+                    this.showToast(`文件 ${file.name} 格式不支持`, 'warning');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            async uploadFiles(files) {
+                const progressContainer = document.getElementById('uploadProgress');
+                const progressBar = document.getElementById('progressBarFill');
+                const progressText = document.getElementById('progressText');
+                const progressPercent = document.getElementById('progressPercent');
+                
+                if (!progressContainer) return;
+                
+                progressContainer.style.display = 'block';
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const totalProgress = ((i + 1) / files.length) * 100;
+                    
+                    progressText.textContent = `上传中: ${file.name}`;
+                    progressPercent.textContent = Math.round(totalProgress) + '%';
+                    progressBar.style.width = totalProgress + '%';
+                    
+                    await this.simulateFileUpload(file);
+                }
+                
+                progressText.textContent = '上传完成！';
+                progressPercent.textContent = '100%';
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 2000);
+                
+                this.showToast(`成功上传 ${files.length} 个文件`, 'success');
+                
+                // 刷新文件列表
+                if (this.fileManager) {
+                    this.fileManager.files = this.fileManager.loadFiles();
+                    this.fileManager.filteredFiles = [...this.fileManager.files];
+                    this.fileManager.renderFiles();
+                    this.fileManager.renderDashboard();
+                }
+            }
+            
+            simulateFileUpload(file) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const fileData = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            uploadTime: new Date().toISOString(),
+                            downloadCount: 0,
+                            description: '用户上传的文件'
+                        };
+                        
+                        // 保存到localStorage
+                        const savedFiles = JSON.parse(localStorage.getItem('siteFiles') || '[]');
+                        savedFiles.push(fileData);
+                        localStorage.setItem('siteFiles', JSON.stringify(savedFiles));
+                        
+                        resolve();
+                    }, 1000 + Math.random() * 2000);
+                });
+            }
+            
+            deleteFile(fileId) {
+                if (!confirm('确定要删除这个文件吗？')) return;
+                
+                // 从localStorage删除
+                const savedFiles = JSON.parse(localStorage.getItem('siteFiles') || '[]');
+                const updatedFiles = savedFiles.filter(f => f.id != fileId);
+                localStorage.setItem('siteFiles', JSON.stringify(updatedFiles));
+                
+                // 更新文件管理器
+                if (this.fileManager) {
+                    this.fileManager.files = updatedFiles;
+                    this.fileManager.filteredFiles = [...updatedFiles];
+                    this.fileManager.renderFiles();
+                    this.fileManager.renderDashboard();
+                }
+                
+                this.showToast('文件已删除', 'success');
+            }
+            
+            changePassword() {
+                const newPassword = document.getElementById('newPassword').value;
+                if (!newPassword) {
+                    this.showToast('请输入新密码', 'warning');
+                    return;
+                }
+                
+                if (newPassword.length < 6) {
+                    this.showToast('密码长度至少6位', 'warning');
+                    return;
+                }
+                
+                // 存储新密码
+                localStorage.setItem('adminPassword', newPassword);
+                this.CORRECT_PASSWORD = newPassword;
+                document.getElementById('newPassword').value = '';
+                
+                this.showToast('密码修改成功', 'success');
+            }
+            
+            clearAllData() {
+                if (confirm('确定要清除所有文件数据吗？此操作不可恢复！')) {
+                    localStorage.removeItem('siteFiles');
+                    
+                    // 重置为默认文件
+                    if (this.fileManager) {
+                        this.fileManager.files = this.fileManager.getDefaultFiles();
+                        this.fileManager.filteredFiles = [...this.fileManager.files];
+                        this.fileManager.renderFiles();
+                        this.fileManager.renderDashboard();
+                    }
+                    
+                    this.showToast('所有数据已清除', 'warning');
+                }
+            }
+            
+            logout() {
+                this.setAuthenticated(false);
+                this.showPublicView();
+                this.showToast('已退出登录', 'info');
+                
+                // 强制刷新页面确保完全重置
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+            
+            isAuthenticated() {
+                return localStorage.getItem('isAuthenticated') === 'true';
+            }
+            
+            setAuthenticated(value) {
+                if (value) {
+                    localStorage.setItem('isAuthenticated', 'true');
+                    localStorage.setItem('authTime', Date.now().toString());
+                } else {
+                    localStorage.removeItem('isAuthenticated');
+                    localStorage.removeItem('authTime');
+                }
+            }
+            
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                
+                const colors = {
+                    success: '#10b981',
+                    error: '#ef4444',
+                    warning: '#f59e0b',
+                    info: '#6366f1'
+                };
+                
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    right: 24px;
+                    padding: 16px 24px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                    border-left: 4px solid ${colors[type]};
+                    transform: translateX(400px);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 2000;
+                    max-width: 400px;
+                `;
+                
+                document.body.appendChild(toast);
+                
+                setTimeout(() => toast.classList.add('show'), 100);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+        }
+        
+        // 从files.html提取的公共文件管理器
+        class PublicFileManager {
+            constructor() {
+                this.files = this.loadFiles();
+                this.filteredFiles = [...this.files];
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.showLoading();
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    this.renderFiles();
+                }, 800);
+            }
+            
+            setupEventListeners() {
+                const searchInput = document.getElementById('searchInput');
+                const sortSelect = document.getElementById('sortSelect');
+                
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        this.filterFiles(e.target.value);
+                    });
+                }
+                
+                if (sortSelect) {
+                    sortSelect.addEventListener('change', (e) => {
+                        this.sortFiles(e.target.value);
+                    });
+                }
+            }
+            
+            showLoading() {
+                const loadingState = document.getElementById('loadingState');
+                const fileGrid = document.getElementById('fileGrid');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (loadingState) loadingState.style.display = 'block';
+                if (fileGrid) fileGrid.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'none';
+            }
+            
+            hideLoading() {
+                const loadingState = document.getElementById('loadingState');
+                if (loadingState) loadingState.style.display = 'none';
+            }
+            
+            loadFiles() {
+                try {
+                    const saved = localStorage.getItem('siteFiles');
+                    return saved ? JSON.parse(saved) : this.getDefaultFiles();
+                } catch (e) {
+                    return this.getDefaultFiles();
+                }
+            }
+            
+            renderDashboard() {
+                const totalFilesEl = document.getElementById('totalFiles');
+                const totalSizeEl = document.getElementById('totalSize');
+                const todayUploadsEl = document.getElementById('todayUploads');
+                const recentFilesList = document.getElementById('recentFilesList');
+                
+                if (!totalFilesEl) return;
+                
+                const totalFiles = this.files.length;
+                const totalSize = this.files.reduce((sum, file) => sum + file.size, 0);
+                
+                // 计算今日上传
+                const today = new Date().toDateString();
+                const todayUploads = this.files.filter(file => 
+                    new Date(file.uploadTime).toDateString() === today
+                ).length;
+                
+                totalFilesEl.textContent = totalFiles;
+                totalSizeEl.textContent = this.formatFileSize(totalSize);
+                todayUploadsEl.textContent = todayUploads;
+                
+                // 渲染最近文件
+                if (recentFilesList) {
+                    const recentFiles = [...this.files]
+                        .sort((a, b) => new Date(b.uploadTime) - new Date(a.uploadTime))
+                        .slice(0, 10);
+                    
+                    if (recentFiles.length === 0) {
+                        recentFilesList.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 40px;">暂无文件</p>';
+                    } else {
+                        recentFilesList.innerHTML = `
+                            <table class="files-table">
+                                <thead>
+                                    <tr>
+                                        <th>文件名</th>
+                                        <th>大小</th>
+                                        <th>上传时间</th>
+                                        <th>下载</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${recentFiles.map(file => `
+                                        <tr>
+                                            <td>
+                                                <div class="file-name">
+                                                    <span class="file-icon">${this.getFileIcon(file.name)}</span>
+                                                    ${file.name}
+                                                </div>
+                                            </td>
+                                            <td>${this.formatFileSize(file.size)}</td>
+                                            <td>${this.formatDate(file.uploadTime)}</td>
+                                            <td>${file.downloadCount}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        `;
+                    }
+                }
+            }
+            
+            getDefaultFiles() {
+                return [
+                    {
+                        id: 1,
+                        name: '示例项目.zip',
+                        size: 2457600,
+                        type: 'application/zip',
+                        uploadTime: new Date(Date.now() - 86400000).toISOString(),
+                        downloadCount: 15,
+                        description: '完整的项目示例代码'
+                    },
+                    {
+                        id: 2,
+                        name: '数据处理脚本.py',
+                        size: 15360,
+                        type: 'text/x-python',
+                        uploadTime: new Date(Date.now() - 172800000).toISOString(),
+                        downloadCount: 8,
+                        description: 'Python数据处理自动化脚本'
+                    },
+                    {
+                        id: 3,
+                        name: '资源压缩包.rar',
+                        size: 5242880,
+                        type: 'application/x-rar-compressed',
+                        uploadTime: new Date(Date.now() - 259200000).toISOString(),
+                        downloadCount: 23,
+                        description: '项目所需资源文件集合'
+                    },
+                    {
+                        id: 4,
+                        name: '安装程序.exe',
+                        size: 15728640,
+                        type: 'application/x-msdownload',
+                        uploadTime: new Date(Date.now() - 345600000).toISOString(),
+                        downloadCount: 42,
+                        description: '软件安装程序'
+                    }
+                ];
+            }
+            
+            filterFiles(searchTerm) {
+                const term = searchTerm.toLowerCase().trim();
+                
+                if (!term) {
+                    this.filteredFiles = [...this.files];
+                } else {
+                    this.filteredFiles = this.files.filter(file => 
+                        file.name.toLowerCase().includes(term) ||
+                        (file.description && file.description.toLowerCase().includes(term))
+                    );
+                }
+                
+                this.renderFiles();
+            }
+            
+            sortFiles(sortBy) {
+                switch (sortBy) {
+                    case 'name':
+                        this.filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'date':
+                        this.filteredFiles.sort((a, b) => new Date(b.uploadTime) - new Date(a.uploadTime));
+                        break;
+                    case 'size':
+                        this.filteredFiles.sort((a, b) => b.size - a.size);
+                        break;
+                    case 'downloads':
+                        this.filteredFiles.sort((a, b) => b.downloadCount - a.downloadCount);
+                        break;
+                }
+                
+                this.renderFiles();
+            }
+            
+            renderFiles() {
+                const fileGrid = document.getElementById('fileGrid');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (!fileGrid) return;
+                
+                if (this.filteredFiles.length === 0) {
+                    fileGrid.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    return;
+                }
+                
+                fileGrid.style.display = 'grid';
+                if (emptyState) emptyState.style.display = 'none';
+                
+                fileGrid.innerHTML = this.filteredFiles.map(file => `
+                    <div class="file-card">
+                        <div class="file-card-icon">${this.getFileIcon(file.name)}</div>
+                        <div class="file-card-name" title="${file.name}">${this.truncateFileName(file.name)}</div>
+                        <div class="file-card-size">${this.formatFileSize(file.size)}</div>
+                        <div class="file-card-date">${this.formatDate(file.uploadTime)}</div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                                下载: ${file.downloadCount} 次
+                            </div>
+                            ${file.description ? `<div style="font-size: 12px; color: #9ca3af;">${file.description}</div>` : ''}
+                        </div>
+                        <button class="download-btn" onclick="integratedSite.fileManager.downloadFile('${file.id}')">
+                            立即下载
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            renderFilesTable() {
+                const filesTableBody = document.getElementById('filesTableBody');
+                const fileCount = document.getElementById('fileCount');
+                const emptyState = document.getElementById('emptyState');
+                const filesTable = document.getElementById('filesTable');
+                
+                if (!filesTableBody) return;
+                
+                if (this.files.length === 0) {
+                    if (filesTable) filesTable.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    if (fileCount) fileCount.textContent = '共 0 个文件';
+                    return;
+                }
+                
+                if (filesTable) filesTable.style.display = 'table';
+                if (emptyState) emptyState.style.display = 'none';
+                if (fileCount) fileCount.textContent = `共 ${this.files.length} 个文件`;
+                
+                const sortedFiles = [...this.files].sort((a, b) => 
+                    new Date(b.uploadTime) - new Date(a.uploadTime)
+                );
+                
+                filesTableBody.innerHTML = sortedFiles.map(file => `
+                    <tr>
+                        <td>
+                            <div class="file-name">
+                                <span class="file-icon">${this.getFileIcon(file.name)}</span>
+                                ${file.name}
+                            </div>
+                        </td>
+                        <td>${this.formatFileSize(file.size)}</td>
+                        <td>${this.formatDate(file.uploadTime)}</td>
+                        <td>${file.downloadCount}</td>
+                        <td>
+                            <div class="file-actions">
+                                <button class="action-btn" onclick="integratedSite.fileManager.downloadFile('${file.id}')">
+                                    下载
+                                </button>
+                                <button class="action-btn delete" onclick="integratedSite.deleteFile('${file.id}')">
+                                    删除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            getFileIcon(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                const iconMap = {
+                    'zip': '📦', 'rar': '📦', 'arj': '📦',
+                    'exe': '⚙️', 'py': '🐍', 'txt': '📄',
+                    'pdf': '📑', 'doc': '📝', 'docx': '📝',
+                    'xls': '📊', 'xlsx': '📊',
+                    'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️'
+                };
+                return iconMap[ext] || '📎';
+            }
+            
+            truncateFileName(filename, maxLength = 20) {
+                if (filename.length <= maxLength) return filename;
+                const ext = filename.split('.').pop();
+                const nameWithoutExt = filename.substring(0, filename.length - ext.length - 1);
+                const truncatedName = nameWithoutExt.substring(0, maxLength - ext.length - 4);
+                return `${truncatedName}...${ext}`;
+            }
+            
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diff = now - date;
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                
+                if (days === 0) {
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    if (hours === 0) {
+                        const minutes = Math.floor(diff / (1000 * 60));
+                        return minutes === 0 ? '刚刚' : `${minutes}分钟前`;
+                    }
+                    return `${hours}小时前`;
+                } else if (days === 1) {
+                    return '昨天';
+                } else if (days < 7) {
+                    return `${days}天前`;
+                } else {
+                    return date.toLocaleDateString('zh-CN');
+                }
+            }
+            
+            downloadFile(fileId) {
+                const file = this.files.find(f => f.id == fileId);
+                if (!file) return;
+                
+                file.downloadCount++;
+                
+                try {
+                    const saved = JSON.parse(localStorage.getItem('siteFiles') || '[]');
+                    const index = saved.findIndex(f => f.id == fileId);
+                    if (index !== -1) saved[index].downloadCount = file.downloadCount;
+                    localStorage.setItem('siteFiles', JSON.stringify(saved));
+                } catch (e) {
+                    console.error('保存下载计数失败:', e);
+                }
+                
+                const content = `文件: ${file.name}\n大小: ${this.formatFileSize(file.size)}\n上传时间: ${file.uploadTime}\n下载次数: ${file.downloadCount}`;
+                const blob = new Blob([content], { type: file.type || 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                this.renderFiles();
+            }
+        }
+        
+        // 初始化
+        let integratedSite;
+        document.addEventListener('DOMContentLoaded', () => {
+            integratedSite = new IntegratedSite();
+            
+            // 开发工具：在控制台输入 loginAsAdmin() 快速登录
+            window.loginAsAdmin = () => {
+                integratedSite.setAuthenticated(true);
+                integratedSite.showAdminView();
+                integratedSite.showToast('开发者模式：已登录', 'success');
+            };
+            
+            // 开发工具：在控制台输入 logout() 快速退出
+            window.logout = () => {
+                integratedSite.logout();
+            };
+        });
+    </script>
+</body>
+</html>
